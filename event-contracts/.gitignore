@@ -1,0 +1,27 @@
+# Java
+target/
+*.class
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment / secrets
+.env
+*.env
+
+# Logs
+*.log
+
+# Build
+build/
+out/
+
+# Node (if you add a frontend later)
+node_modules/
+dist/
