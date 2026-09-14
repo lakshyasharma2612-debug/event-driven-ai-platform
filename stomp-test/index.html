@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>STOMP Test</title>
+</head>
+<body>
+
+<h2>STOMP Connection Test</h2>
+
+<button id="connect">Connect</button>
+<button id="send">Send Test Message</button>
+
+<pre id="output"></pre>
+
+<script type="module">
+    import { Client } from
+        "https://cdn.jsdelivr.net/npm/@stomp/stompjs@7.1.1/esm6/index.js";
+
+    const output = document.getElementById("output");
+
+    const client = new Client({
+        brokerURL: "ws://localhost:8080/ws",
+
+        onConnect: () => {
+            output.textContent += "Connected to STOMP\\n";
+
+            client.subscribe("/topic/task-updates", message => {
+                output.textContent +=
+                    "Received: " + message.body + "\\n";
+            });
+
+            output.textContent +=
+                "Subscribed to /topic/task-updates\\n";
+        },
+
+        onWebSocketError: error => {
+            output.textContent +=
+                "WebSocket error\\n";
+            console.error(error);
+        },
+
+        onStompError: frame => {
+            output.textContent +=
+                "STOMP error: " + frame.headers["message"] + "\\n";
+        }
+    });
+
+    document.getElementById("connect").onclick = () => {
+        client.activate();
+    };
+
+    document.getElementById("send").onclick = () => {
+        client.publish({
+            destination: "/topic/task-updates",
+            body: JSON.stringify({
+                taskId: "test-123",
+                status: "PROCESSING",
+                timestamp: new Date().toISOString()
+            })
+        });
+    };
+</script>
+
+</body>
+</html>

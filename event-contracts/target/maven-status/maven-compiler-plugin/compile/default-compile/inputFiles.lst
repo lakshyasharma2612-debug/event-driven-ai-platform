@@ -1,2 +1,4 @@
 C:\Event driven ai platform\event-contracts\src\main\java\com\event\platform\events\AnalysisRequested.java
 C:\Event driven ai platform\event-contracts\src\main\java\com\event\platform\events\AnalysisResult.java
+C:\Event driven ai platform\event-contracts\src\main\java\com\event\platform\events\TaskStatus.java
+C:\Event driven ai platform\event-contracts\src\main\java\com\event\platform\events\TaskStatusChanged.java

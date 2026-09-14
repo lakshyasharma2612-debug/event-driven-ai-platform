@@ -1,13 +1,18 @@
 package com.api.service.event;
 
+import com.event.platform.events.AnalysisResult;
 
+import lombok.RequiredArgsConstructor;
 
- import com.event.platform.events.AnalysisResult;
 import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 @Service
+@RequiredArgsConstructor 
 public class AnalysisResultConsumer<AnalysisResultls> {
+
+    private final SimpMessagingTemplate messagingTemplate;
 
     @KafkaListener(
             topics = "analysis-results",
@@ -24,5 +29,9 @@ public class AnalysisResultConsumer<AnalysisResultls> {
         if (result.getError() != null) {
             System.out.println("Error: " + result.getError());
         }
+        messagingTemplate.convertAndSend(
+                "/topic/task-updates",
+                result
+        );
     }
 }
