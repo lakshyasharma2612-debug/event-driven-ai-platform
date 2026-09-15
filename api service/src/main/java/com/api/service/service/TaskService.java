@@ -15,8 +15,9 @@ public class TaskService {
     public TaskService(AnalysisRequestProducer analysisRequestProducer) {
         this.analysisRequestProducer = analysisRequestProducer;
     }
+  
 
-    public String createTask(String prompt, String fileId) {
+    public String createTask(String prompt,String fileId) {
 
         String taskId = UUID.randomUUID().toString();
 
@@ -24,8 +25,7 @@ public class TaskService {
                 taskId,
                 prompt,
                 fileId,
-                Instant.now(),
-                1
+                Instant.now()      
         );
 
         analysisRequestProducer.sendAnalysisRequest(request);

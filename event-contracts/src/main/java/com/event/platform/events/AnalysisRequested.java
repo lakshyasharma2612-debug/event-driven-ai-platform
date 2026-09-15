@@ -8,17 +8,17 @@ public class AnalysisRequested {
     private String prompt;
     private String fileId;
     private Instant requestedAt;
-    private int attempt;
+
 
     public AnalysisRequested() {}
 
     public AnalysisRequested(String taskId, String prompt, String fileId,
-                             Instant requestedAt, int attempt) {
+                             Instant requestedAt) {
         this.taskId = taskId;
         this.prompt = prompt;
         this.fileId = fileId;
         this.requestedAt = requestedAt;
-        this.attempt = attempt;
+  
     }
 
     public String getTaskId() { return taskId; }
@@ -32,7 +32,4 @@ public class AnalysisRequested {
 
     public Instant getRequestedAt() { return requestedAt; }
     public void setRequestedAt(Instant requestedAt) { this.requestedAt = requestedAt; }
-
-    public int getAttempt() { return attempt; }
-    public void setAttempt(int attempt) { this.attempt = attempt; }
 }

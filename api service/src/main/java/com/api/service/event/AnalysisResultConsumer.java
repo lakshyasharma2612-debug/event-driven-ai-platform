@@ -24,7 +24,7 @@ public class AnalysisResultConsumer<AnalysisResultls> {
         System.out.println("Task ID: " + result.getTaskId());
         System.out.println("Status: " + result.getStatus());
         System.out.println("Result: " + result.getResult());
-        System.out.println("Attempt: " + result.getAttempt());
+ 
 
         if (result.getError() != null) {
             System.out.println("Error: " + result.getError());

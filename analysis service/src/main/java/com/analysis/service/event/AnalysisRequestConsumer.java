@@ -1,5 +1,6 @@
 package com.analysis.service.event;
 
+import com.analysis.service.ai_service.AIService;
 import com.event.platform.events.AnalysisRequested;
 import com.event.platform.events.AnalysisResult;
 import com.event.platform.events.TaskStatus;
@@ -15,13 +16,16 @@ public class AnalysisRequestConsumer {
 
     private final AnalysisResultProducer resultProducer;
     private final TaskStatusProducer statusProducer;
+    private  final AIService aiService;
 
     public AnalysisRequestConsumer(
         AnalysisResultProducer resultProducer,
-        TaskStatusProducer statusProducer) {
+        TaskStatusProducer statusProducer,
+    AIService aiService) {
 
     this.resultProducer = resultProducer;
     this.statusProducer = statusProducer;
+    this.aiService=aiService;
 }
 
     @KafkaListener(
@@ -33,28 +37,43 @@ public class AnalysisRequestConsumer {
         System.out.println("Received analysis request");
         System.out.println("Task ID: " + request.getTaskId());
         System.out.println("Prompt: " + request.getPrompt());
-        System.out.println("Attempt: " + request.getAttempt());
 
-        // Simulate analysis work
+     
         try {
             
             statusProducer.sendStatusChanged(new TaskStatusChanged(request.getTaskId(),TaskStatus.PROCESSING,Instant.now()));
-            Thread.sleep(3000);
+            String response =aiService.generate(request.getPrompt());
             statusProducer.sendStatusChanged(new TaskStatusChanged(request.getTaskId(),TaskStatus.GENERATING,Instant.now()));
-            Thread.sleep(3000);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
 
         AnalysisResult result = new AnalysisResult(
                 request.getTaskId(),
                 TaskStatus.COMPLETED,
-                "Fake analysis completed for: " + request.getPrompt(),
+                response,
                 null,
-                request.getAttempt(),
                 Instant.now()
         );
 
         resultProducer.sendAnalysisResult(result);
+        } catch (Exception e) {
+            System.err.println(
+                    "AI generation failed for task " + request.getTaskId()
+            );
+            e.printStackTrace();
+              statusProducer.sendStatusChanged(new TaskStatusChanged(
+                    request.getTaskId(),
+                    TaskStatus.FAILED,
+                    Instant.now())
+            );
+
+            AnalysisResult result = new AnalysisResult(
+                request.getTaskId(),
+                TaskStatus.FAILED,
+                null,
+                "AI generation failed. Please try again later.",
+                Instant.now()
+        );
+
+            resultProducer.sendAnalysisResult(result);
+        }
     }
 }

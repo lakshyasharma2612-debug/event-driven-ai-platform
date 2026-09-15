@@ -8,18 +8,16 @@ public class AnalysisResult {
     private TaskStatus status;
     private String result;
     private String error;
-    private int attempt;
     private Instant completedAt;
 
     public AnalysisResult() {}
 
     public AnalysisResult(String taskId, TaskStatus status, String result,
-                          String error, int attempt, Instant completedAt) {
+                          String error, Instant completedAt) {
         this.taskId = taskId;
         this.status = status;
         this.result = result;
         this.error = error;
-        this.attempt = attempt;
         this.completedAt = completedAt;
     }
 
@@ -55,13 +53,6 @@ public class AnalysisResult {
         this.error = error;
     }
 
-    public int getAttempt() {
-        return attempt;
-    }
-
-    public void setAttempt(int attempt) {
-        this.attempt = attempt;
-    }
 
     public Instant getCompletedAt() {
         return completedAt;
