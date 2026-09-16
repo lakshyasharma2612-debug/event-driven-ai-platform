@@ -1,4 +1,6 @@
 com\event\platform\events\AnalysisResult.class
+com\event\platform\events\FileUploaded.class
 com\event\platform\events\TaskStatus.class
+com\event\platform\events\DocumentReady.class
 com\event\platform\events\TaskStatusChanged.class
 com\event\platform\events\AnalysisRequested.class

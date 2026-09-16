@@ -6,27 +6,22 @@ import com.event.platform.events.AnalysisResult;
 import com.event.platform.events.TaskStatus;
 import com.event.platform.events.TaskStatusChanged;
 
+import lombok.RequiredArgsConstructor;
+
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+ 
 
 @Service
+@RequiredArgsConstructor
 public class AnalysisRequestConsumer {
 
     private final AnalysisResultProducer resultProducer;
     private final TaskStatusProducer statusProducer;
-    private  final AIService aiService;
-
-    public AnalysisRequestConsumer(
-        AnalysisResultProducer resultProducer,
-        TaskStatusProducer statusProducer,
-    AIService aiService) {
-
-    this.resultProducer = resultProducer;
-    this.statusProducer = statusProducer;
-    this.aiService=aiService;
-}
+    private final AIService aiService;
+    private final DocumentStateManager stateManager;
 
     @KafkaListener(
             topics = "analysis-requests",
@@ -38,12 +33,53 @@ public class AnalysisRequestConsumer {
         System.out.println("Task ID: " + request.getTaskId());
         System.out.println("Prompt: " + request.getPrompt());
 
-     
         try {
-            
-            statusProducer.sendStatusChanged(new TaskStatusChanged(request.getTaskId(),TaskStatus.PROCESSING,Instant.now()));
-            String response =aiService.generate(request.getPrompt());
-            statusProducer.sendStatusChanged(new TaskStatusChanged(request.getTaskId(),TaskStatus.GENERATING,Instant.now()));
+
+            // No document required
+            if (request.getFileId() == null) {
+                processTask(request);
+                return;
+            }
+
+            // Document required
+            boolean waiting = stateManager.addIfNotReady(request);
+
+            if (waiting) {
+                System.out.println(
+                        "Document not ready. Task waiting: "
+                                + request.getTaskId()
+                );
+                return;
+            }
+
+            // Document is already ready
+            processTask(request);
+
+        } catch (Exception e) {
+
+            handleFailure(request, e);
+        }
+    }
+
+    public void processTask(AnalysisRequested request) {
+
+        statusProducer.sendStatusChanged(
+                new TaskStatusChanged(
+                        request.getTaskId(),
+                        TaskStatus.PROCESSING,
+                        Instant.now()
+                )
+        );
+
+        statusProducer.sendStatusChanged(
+                new TaskStatusChanged(
+                        request.getTaskId(),
+                        TaskStatus.GENERATING,
+                        Instant.now()
+                )
+        );
+
+        String response = aiService.generate(request.getPrompt());
 
         AnalysisResult result = new AnalysisResult(
                 request.getTaskId(),
@@ -54,18 +90,29 @@ public class AnalysisRequestConsumer {
         );
 
         resultProducer.sendAnalysisResult(result);
-        } catch (Exception e) {
-            System.err.println(
-                    "AI generation failed for task " + request.getTaskId()
-            );
-            e.printStackTrace();
-              statusProducer.sendStatusChanged(new TaskStatusChanged(
-                    request.getTaskId(),
-                    TaskStatus.FAILED,
-                    Instant.now())
-            );
+    }
 
-            AnalysisResult result = new AnalysisResult(
+    private void handleFailure(
+            AnalysisRequested request,
+            Exception e
+    ) {
+
+        System.err.println(
+                "AI generation failed for task "
+                        + request.getTaskId()
+        );
+
+        e.printStackTrace();
+
+        statusProducer.sendStatusChanged(
+                new TaskStatusChanged(
+                        request.getTaskId(),
+                        TaskStatus.FAILED,
+                        Instant.now()
+                )
+        );
+
+        AnalysisResult result = new AnalysisResult(
                 request.getTaskId(),
                 TaskStatus.FAILED,
                 null,
@@ -73,7 +120,6 @@ public class AnalysisRequestConsumer {
                 Instant.now()
         );
 
-            resultProducer.sendAnalysisResult(result);
-        }
+        resultProducer.sendAnalysisResult(result);
     }
 }
