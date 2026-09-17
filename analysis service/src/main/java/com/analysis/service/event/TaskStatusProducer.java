@@ -3,18 +3,20 @@ package com.analysis.service.event;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
+import com.analysis.config.KafkaTopics;
 import com.event.platform.events.TaskStatusChanged;
 
-@Service 
-public class TaskStatusProducer {
-private final KafkaTemplate<String, TaskStatusChanged> kafkaTemplate;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
-    public TaskStatusProducer(
-            KafkaTemplate<String, TaskStatusChanged> kafkaTemplate) {
-        this.kafkaTemplate = kafkaTemplate;
-    }
+@Service
+@RequiredArgsConstructor
+@Slf4j
+public class TaskStatusProducer {
+    private final KafkaTemplate<String, TaskStatusChanged> kafkaTemplate;
 
     public void sendStatusChanged(TaskStatusChanged taskStatusChanged){
-        kafkaTemplate.send("task-status",taskStatusChanged.getTaskId(),taskStatusChanged);
+        log.debug("Sending task status change taskId={} status={}", taskStatusChanged.getTaskId(), taskStatusChanged.getStatus());
+        kafkaTemplate.send(KafkaTopics.TASK_STATUS,taskStatusChanged.getTaskId(),taskStatusChanged);
     }
 }

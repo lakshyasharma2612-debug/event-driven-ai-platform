@@ -2,6 +2,8 @@ package com.api.service.service;
 
 import com.api.service.event.FileUploadProducer;
 import com.event.platform.events.FileUploaded;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -13,18 +15,19 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Service
+@RequiredArgsConstructor
+@Slf4j
 public class FileService {
 
     private final FileUploadProducer fileUploadedProducer;
 
     private final Path uploadDirectory = Paths.get("uploads");
 
-    public FileService(FileUploadProducer fileUploadedProducer) {
-        this.fileUploadedProducer = fileUploadedProducer;
-    }
-
     public String uploadFile(MultipartFile file) throws IOException {
-
+        if (file.isEmpty()) {
+            throw new IllegalArgumentException("File cannot be empty");
+        }
+        log.info("Uploading file originalFilename={} contentType={} size={}", file.getOriginalFilename(), file.getContentType(), file.getSize());
         Files.createDirectories(uploadDirectory);
 
         String fileId = UUID.randomUUID().toString();
@@ -48,7 +51,8 @@ public class FileService {
                 Instant.now()
         );
 
-        fileUploadedProducer.sebdFileupload(event);
+        fileUploadedProducer.sendFileUploaded(event);
+        log.info("File uploaded fileId={} stored as {}{}", fileId, fileId, extension);
 
         return fileId;
     }
