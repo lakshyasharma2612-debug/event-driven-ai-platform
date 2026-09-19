@@ -7,6 +7,9 @@ import com.event.platform.events.AnalysisRequested;
 import com.event.platform.events.AnalysisResult;
 import com.event.platform.events.TaskStatus;
 import com.event.platform.events.TaskStatusChanged;
+
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.document.Document;
@@ -24,9 +27,14 @@ public class AnalysisTaskProcessor {
     private final TaskStatusProducer statusProducer;
     private final AIService aiService;
     private final DocumentVectorStoreService documentVectorStoreService;
+    private final MeterRegistry meterRegistry;
+ 
 
     public void process(AnalysisRequested request) {
         log.info("Processing taskId={} fileId={}", request.getTaskId(), request.getFileId());
+
+        Timer.Sample sample =Timer.start(meterRegistry);
+        
         statusProducer.sendStatusChanged(
                 new TaskStatusChanged(
                         request.getTaskId(),
@@ -84,11 +92,17 @@ public class AnalysisTaskProcessor {
                 TaskStatus.COMPLETED,
                 response,
                 null,
-                Instant.now()
+                Instant.now()  
         );
-
+         meterRegistry.counter("total_tasks_completed").increment();
+        
         log.info("Task completed taskId={}", request.getTaskId());
         resultProducer.sendAnalysisResult(result);
+        sample.stop(
+                Timer.builder("task_processing_duration")
+                        .description("Time taken to process an analysis task")
+                        .register(meterRegistry)
+        );
     }
 
     public void failTask(AnalysisRequested task, String error) {
@@ -109,6 +123,7 @@ public class AnalysisTaskProcessor {
                 error,
                 Instant.now()
         );
+        meterRegistry.counter("total_tasks_failed").increment();
 
         resultProducer.sendAnalysisResult(result);
         }

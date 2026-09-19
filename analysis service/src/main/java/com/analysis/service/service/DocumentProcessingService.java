@@ -3,9 +3,12 @@ package com.analysis.service.service;
 
 import com.event.platform.events.AnalysisRequested;
 import com.event.platform.events.FileUploaded;
+
+import io.micrometer.core.instrument.MeterRegistry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.document.Document;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.nio.file.Path;
@@ -22,26 +25,32 @@ public class DocumentProcessingService {
     private final DocumentVectorStoreService documentVectorStoreService;
     private final DocumentStateManager documentStateManager;
     private final AnalysisTaskProcessor taskProcessor;
+    private final MeterRegistry meterRegistry;
+
+    @Value("${app.upload.dir}")
+        private String uploadDir;
 
     public void process(FileUploaded event) throws Exception {
         log.info("Processing document fileId={} contentType={}", event.getFileId(), event.getContentType());
+
         if (documentVectorStoreService.isDocumentReady(event.getFileId())) {
+                
                 log.info("Document already ready fileId={}", event.getFileId());
                 documentStateManager.documentReady(event.getFileId());
                 return;
                 }
 
         Path filePath = Paths.get(
-                "..",
-                "uploads",
+                uploadDir,
                 event.getFileId() + getExtension(event.getContentType())
         );
-
+        log.info("Starting text extraction fileId={}", event.getFileId());
         String extractedText =
                 documentIngestionService.extractText(
                         filePath,
                         event.getContentType()
                 );
+        log.info("Text extraction completed fileId={} textLength={}", event.getFileId(), extractedText.length());
         log.info("Extraction completed fileId={} chars={}", event.getFileId(), extractedText.length());
 
         List<Document> chunks =
@@ -52,6 +61,8 @@ public class DocumentProcessingService {
         log.info("Created {} chunks for fileId={}", chunks.size(), event.getFileId());
 
         documentVectorStoreService.store(chunks);
+        
+        meterRegistry.counter("documents_processed_total").increment();
         log.info("Document stored in vector store fileId={}", event.getFileId());
 
         List<AnalysisRequested> waitingTasks =
