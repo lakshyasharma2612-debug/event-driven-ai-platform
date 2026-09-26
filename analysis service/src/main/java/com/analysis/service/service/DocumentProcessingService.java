@@ -11,6 +11,7 @@ import org.springframework.ai.document.Document;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
@@ -30,7 +31,7 @@ public class DocumentProcessingService {
     @Value("${app.upload.dir}")
         private String uploadDir;
 
-    public void process(FileUploaded event) throws Exception {
+    public void process(FileUploaded event) throws IOException {
         log.info("Processing document fileId={} contentType={}", event.getFileId(), event.getContentType());
 
         if (documentVectorStoreService.isDocumentReady(event.getFileId())) {
@@ -44,21 +45,20 @@ public class DocumentProcessingService {
                 uploadDir,
                 event.getFileId() + getExtension(event.getContentType())
         );
-        log.info("Starting text extraction fileId={}", event.getFileId());
+        log.debug("Starting text extraction fileId={}", event.getFileId());
         String extractedText =
                 documentIngestionService.extractText(
                         filePath,
                         event.getContentType()
                 );
-        log.info("Text extraction completed fileId={} textLength={}", event.getFileId(), extractedText.length());
-        log.info("Extraction completed fileId={} chars={}", event.getFileId(), extractedText.length());
+        log.debug("Text extraction completed fileId={} textLength={}", event.getFileId(), extractedText.length());
 
         List<Document> chunks =
                 documentChunkingService.chunk(
                         extractedText,
                         event.getFileId()
                 );
-        log.info("Created {} chunks for fileId={}", chunks.size(), event.getFileId());
+        log.debug("Created {} chunks for fileId={}", chunks.size(), event.getFileId());
 
         documentVectorStoreService.store(chunks);
         
@@ -70,7 +70,12 @@ public class DocumentProcessingService {
         log.info("Resuming {} waiting tasks for fileId={}", waitingTasks.size(), event.getFileId());
 
         for (AnalysisRequested task : waitingTasks) {
-            taskProcessor.process(task);
+            try {
+                taskProcessor.process(task);
+            } catch (RuntimeException e) {
+                log.warn("Failed to process waiting taskId={} fileId={}: {}", task.getTaskId(), event.getFileId(), e.getMessage());
+                taskProcessor.failTask(task, "Task processing failed: " + e.getMessage());
+            }
         }
     }
 

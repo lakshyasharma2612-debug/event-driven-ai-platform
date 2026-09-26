@@ -23,13 +23,16 @@ services:
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
 
       KAFKA_NUM_PARTITIONS: 3
-
+    restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092 > /dev/null 2>&1"]
       interval: 10s
       timeout: 5s
       retries: 10
       start_period: 20s
+    mem_limit: 1g
+    cpus: 1.0
+
 
   qdrant:
     image: qdrant/qdrant:v1.19.1
@@ -39,8 +42,9 @@ services:
       - "6334:6334"
     volumes:
       - qdrant_data:/qdrant/storage
-   
-
+    restart: unless-stopped
+    mem_limit: 1g
+    cpus: 1.0
 
   prometheus:
     image: prom/prometheus:v3.8.1
@@ -49,8 +53,13 @@ services:
       - "9090:9090"
     volumes:
       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+    mem_limit: 512m
+    cpus: 0.5
+
 
   grafana:
     image: grafana/grafana:12.1.1
@@ -59,25 +68,38 @@ services:
       - "3000:3000"
     depends_on:
       - prometheus
-  
+    volumes:
+      - grafana_data:/var/lib/grafana
+    restart: unless-stopped
+    mem_limit: 512m
+    cpus: 0.5
+
   api-service:
     build:
-      context: ../api service
+      context: ..
+      dockerfile: api service/Dockerfile
+    image: event-platform-api:latest
     container_name: api-service
     ports:
       - "8080:8080"
     environment:
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
       APP_UPLOAD_DIR: /app/uploads
+      JAVA_OPTS: "-XX:MaxRAMPercentage=75.0"
     volumes:
-      - ../uploads:/app/uploads
+      - uploads_data:/app/uploads
     depends_on:
       kafka:
         condition: service_healthy
+    restart: unless-stopped
+    mem_limit: 512m
+    cpus: 1.0
 
   analysis-service:
     build:
-      context: ../analysis service
+      context: ..
+      dockerfile: analysis service/Dockerfile
+    image: event-platform-analysis:1.0.0
     container_name: analysis-service
     ports:
       - "8081:8081"
@@ -87,8 +109,9 @@ services:
       QDRANT_PORT: 6334
       OLLAMA_BASE_URL: http://host.docker.internal:11434
       APP_UPLOAD_DIR: /app/uploads
+      JAVA_OPTS: "-XX:MaxRAMPercentage=75.0"
     volumes:
-      - ../uploads:/app/uploads
+      - uploads_data:/app/uploads
     extra_hosts:
       - "host.docker.internal:host-gateway"
     depends_on:
@@ -96,5 +119,11 @@ services:
         condition: service_healthy
       qdrant:
         condition: service_started
+    restart: unless-stopped
+    mem_limit: 1g
+    cpus: 2.0
 volumes:
   qdrant_data:
+  grafana_data:
+  prometheus_data:
+  uploads_data:

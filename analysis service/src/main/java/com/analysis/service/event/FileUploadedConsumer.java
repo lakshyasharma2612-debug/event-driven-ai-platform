@@ -8,6 +8,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -19,7 +21,7 @@ public class FileUploadedConsumer {
         topics = KafkaTopics.FILE_UPLOADED,
         groupId = "document-ingestion"
         )
-    public void consume(FileUploaded event) throws Exception {
+    public void consume(FileUploaded event) throws IOException {
         log.info("File uploaded event received fileId={} contentType={}", event.getFileId(), event.getContentType());
 
         documentProcessingService.process(event);

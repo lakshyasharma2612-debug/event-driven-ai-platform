@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: api-config
+  namespace: event-platform
+
+data:
+  KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
+  APP_UPLOAD_DIR: "/app/uploads"

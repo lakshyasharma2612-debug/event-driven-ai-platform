@@ -23,7 +23,7 @@ public class AnalysisResultConsumer {
     )
     public void consumeAnalysisResult(AnalysisResult result) {
         log.info("Received analysis result for taskId={} status={}", result.getTaskId(), result.getStatus());
-        log.debug("TaskId: {}, Result: {}", result.getTaskId(), result.getResult());
+        log.debug("TaskId: {}, resultLength: {}", result.getTaskId(), result.getResult() != null ? result.getResult().length() : 0);
 
         if (result.getError() != null) {
             log.warn("TaskId: {} completed with error: {}", result.getTaskId(), result.getError());

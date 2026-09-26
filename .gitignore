@@ -1,0 +1,35 @@
+# Build output
+target/
+build/
+out/
+*.class
+
+# Uploaded user data - never commit
+uploads/
+*.pdf
+test.txt
+
+# Local runtime data stores - never commit
+qdrant-data/
+prometheus-data/
+grafana-data/
+
+# Environment / secrets - never commit
+.env
+*.env
+*.pem
+*.key
+
+# Logs
+*.log
+
+# IDE / OS
+.idea/
+*.iml
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Node (if frontend added later)
+node_modules/
+dist/

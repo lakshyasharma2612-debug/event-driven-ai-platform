@@ -76,4 +76,30 @@ public class FileService {
 
         return fileId;
     }
+
+    public boolean fileExists(String fileId) {
+
+    if (fileId == null || fileId.isBlank()) {
+        return false;
+    }
+
+    // Prevent path traversal
+    if (!fileId.matches(
+            "^[a-fA-F0-9\\-]{36}$")) {
+        return false;
+    }
+
+    String[] extensions = {".pdf", ".txt", ".docx"};
+
+    for (String extension : extensions) {
+
+        Path filePath = uploadDirectory.resolve(fileId + extension);
+
+        if (Files.isRegularFile(filePath)) {
+            return true;
+        }
+    }
+
+    return false;
+}
 }

@@ -2,6 +2,7 @@ package com.analysis.service.service.extractor;
 
 import org.springframework.stereotype.Component;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -14,7 +15,7 @@ public class TxtExtractor implements DocumentExtractor {
     }
 
     @Override
-    public String extract(Path filePath) throws Exception {
+    public String extract(Path filePath) throws IOException {
         return Files.readString(filePath);
     }
 }

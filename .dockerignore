@@ -1,0 +1,11 @@
+**/target
+.git
+.gitignore
+uploads
+qdrant-data
+prometheus-data
+grafana-data
+*.env
+*.log
+.idea
+.vscode

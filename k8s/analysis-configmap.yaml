@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: analysis-config
+  namespace: event-platform
+
+data:
+  KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
+  QDRANT_HOST: "qdrant"
+  QDRANT_PORT: "6334"
+  OLLAMA_BASE_URL: "http://host.docker.internal:11434"
+  APP_UPLOAD_DIR: "/app/uploads"

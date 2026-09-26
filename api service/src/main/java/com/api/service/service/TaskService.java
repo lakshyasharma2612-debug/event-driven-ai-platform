@@ -6,7 +6,10 @@ import com.event.platform.events.AnalysisRequested;
 import io.micrometer.core.instrument.MeterRegistry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -18,8 +21,16 @@ public class TaskService {
 
     private final AnalysisRequestProducer analysisRequestProducer;
     private final MeterRegistry meterRegistry;
+    private final FileService fileService;
 
     public String createTask(String prompt, String fileId) {
+         if (fileId != null && !fileService.fileExists(fileId)) {
+
+        throw new ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "Invalid file ID: " + fileId
+        );
+    }
         log.info("Creating task fileId={} promptLength={}", fileId, prompt != null ? prompt.length() : 0);
 
         String taskId = UUID.randomUUID().toString();

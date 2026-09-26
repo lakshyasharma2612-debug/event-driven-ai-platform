@@ -4,6 +4,7 @@ import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.apache.poi.xwpf.extractor.XWPFWordExtractor;
 import org.springframework.stereotype.Component;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -18,7 +19,7 @@ public class DocxExtractor implements DocumentExtractor {
     }
 
     @Override
-    public String extract(Path filePath) throws Exception {
+    public String extract(Path filePath) throws IOException {
 
         try (InputStream inputStream = Files.newInputStream(filePath);
              XWPFDocument document = new XWPFDocument(inputStream);

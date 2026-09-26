@@ -19,10 +19,4 @@ public class FileUploadProducer {
         log.debug("Sending file uploaded event fileId={} contentType={}", file.getFileId(), file.getContentType());
         kafkaTemplate.send(KafkaTopics.FILE_UPLOADED, file.getFileId(), file);
     }
-
-    /** @deprecated use {@link #sendFileUploaded(FileUploaded)} - typo method kept for backwards compatibility */
-    @Deprecated
-    public void sebdFileupload(FileUploaded file) {
-        sendFileUploaded(file);
-    }
 }

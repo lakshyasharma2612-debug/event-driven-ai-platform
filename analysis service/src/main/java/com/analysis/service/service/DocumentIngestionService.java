@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 
@@ -15,7 +16,7 @@ public class DocumentIngestionService {
 
     private final List<DocumentExtractor> extractors;
 
-    public String extractText(Path filePath, String contentType) throws Exception {
+    public String extractText(Path filePath, String contentType) throws IOException {
 
         DocumentExtractor extractor = extractors.stream()
                 .filter(e -> e.supports(contentType))

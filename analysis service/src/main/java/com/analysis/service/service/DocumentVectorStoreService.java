@@ -51,9 +51,20 @@ public class DocumentVectorStoreService {
                 .filterExpression("fileId == '" + fileId + "'")
                 .build();
 
-        List<Document> documents =
-                vectorStore.similaritySearch(request);
+       try {
+        List<Document> documents = vectorStore.similaritySearch(request);
 
         return !documents.isEmpty();
+
+    } catch (io.grpc.StatusRuntimeException e) {
+
+        if (e.getStatus().getCode() == io.grpc.Status.Code.NOT_FOUND) {
+            log.warn("Qdrant collection does not exist. Skipping readiness search for fileId={}", fileId);
+
+            return false;
+        }
+
+        throw e;
+    }
     }
 }

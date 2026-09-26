@@ -5,6 +5,7 @@ import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
 import org.springframework.stereotype.Component;
 
+import java.io.IOException;
 import java.nio.file.Path;
 
 @Component
@@ -16,7 +17,7 @@ public class PdfExtractor implements DocumentExtractor {
     }
 
     @Override
-    public String extract(Path filePath) throws Exception {
+    public String extract(Path filePath) throws IOException {
 
         try (PDDocument document = Loader.loadPDF(filePath.toFile())) {
 
